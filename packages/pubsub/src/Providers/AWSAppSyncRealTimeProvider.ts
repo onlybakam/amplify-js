@@ -228,6 +228,8 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 	}) {
 		const {
 			appSyncGraphqlEndpoint,
+			appSyncRealtimeEndpoint,
+			appSyncRealtimeHost,
 			authenticationType,
 			query,
 			variables,
@@ -258,6 +260,7 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 			...(await this._awsRealTimeHeaderBasedAuth({
 				apiKey,
 				appSyncGraphqlEndpoint,
+				appSyncRealtimeHost,
 				authenticationType,
 				payload: dataString,
 				canonicalUri: '',
@@ -275,6 +278,7 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 				extensions: {
 					authorization: {
 						...headerObj,
+						...(appSyncRealtimeHost ? { host: appSyncRealtimeHost } : null),
 					},
 				},
 			},
@@ -287,6 +291,8 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 			await this._initializeWebSocketConnection({
 				apiKey,
 				appSyncGraphqlEndpoint,
+				appSyncRealtimeEndpoint,
+				appSyncRealtimeHost,
 				authenticationType,
 				region,
 			});
@@ -561,6 +567,8 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 
 	private _initializeWebSocketConnection({
 		appSyncGraphqlEndpoint,
+		appSyncRealtimeEndpoint,
+		appSyncRealtimeHost,
 		authenticationType,
 		apiKey,
 		region,
@@ -576,11 +584,13 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 					this.socketStatus = SOCKET_STATUS.CONNECTING;
 					// Creating websocket url with required query strings
 					const protocol = this.isSSLEnabled ? 'wss://' : 'ws://';
-					const discoverableEndpoint = appSyncGraphqlEndpoint
-						.replace('https://', protocol)
-						.replace('http://', protocol)
-						.replace('appsync-api', 'appsync-realtime-api')
-						.replace('gogi-beta', 'grt-beta');
+					const discoverableEndpoint =
+						appSyncRealtimeEndpoint ||
+						appSyncGraphqlEndpoint
+							.replace('https://', protocol)
+							.replace('http://', protocol)
+							.replace('appsync-api', 'appsync-realtime-api')
+							.replace('gogi-beta', 'grt-beta');
 
 					const payloadString = '{}';
 					const headerString = JSON.stringify(
@@ -590,6 +600,7 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 							canonicalUri: '/connect',
 							apiKey,
 							appSyncGraphqlEndpoint,
+							appSyncRealtimeHost,
 							region,
 						})
 					);
@@ -740,6 +751,7 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 		payload,
 		canonicalUri,
 		appSyncGraphqlEndpoint,
+		appSyncRealtimeHost,
 		apiKey,
 		region,
 	}): Promise<any> {
@@ -765,7 +777,7 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 			appSyncGraphqlEndpoint,
 			apiKey,
 			region,
-			host,
+			host: appSyncRealtimeHost || host,
 		});
 
 		return result;

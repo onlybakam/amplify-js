@@ -342,6 +342,8 @@ export class GraphQLAPIClass {
 		const {
 			aws_appsync_region: region,
 			aws_appsync_graphqlEndpoint: appSyncGraphqlEndpoint,
+			aws_appsync_realtime_endpoint: appSyncRealtimeEndpoint,
+			aws_appsync_realtime_host: appSyncRealtimeHost,
 			aws_appsync_authenticationType,
 			aws_appsync_apiKey: apiKey,
 			graphql_headers = () => ({}),
@@ -353,6 +355,8 @@ export class GraphQLAPIClass {
 			return PubSub.subscribe('', {
 				provider: INTERNAL_AWS_APPSYNC_REALTIME_PUBSUB_PROVIDER,
 				appSyncGraphqlEndpoint,
+				appSyncRealtimeEndpoint,
+				appSyncRealtimeHost,
 				authenticationType,
 				apiKey,
 				query: print(query),
