@@ -278,7 +278,6 @@ export class AWSAppSyncRealTimeProvider extends AbstractPubSubProvider {
 				extensions: {
 					authorization: {
 						...headerObj,
-						...(appSyncRealtimeHost ? { host: appSyncRealtimeHost } : null),
 					},
 				},
 			},

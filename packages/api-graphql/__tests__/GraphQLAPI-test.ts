@@ -1302,6 +1302,80 @@ describe('API test', () => {
 				},
 			});
 		});
+
+		test('custom domain on subscription with API_KEY', async () => {
+			expect.assertions(1);
+
+			jest
+				.spyOn(RestClient.prototype, 'post')
+				.mockImplementation(async (url, init) => ({
+					extensions: {
+						subscription: {
+							newSubscriptions: {},
+						},
+					},
+				}));
+
+			const cache_config = {
+				capacityInBytes: 3000,
+				itemMaxSize: 800,
+				defaultTTL: 3000000,
+				defaultPriority: 5,
+				warningThreshold: 0.8,
+				storage: window.localStorage,
+			};
+
+			Cache.configure(cache_config);
+
+			jest.spyOn(Cache, 'getItem').mockReturnValue({ token: 'id_token' });
+
+			const spyon_pubsub = jest
+				.spyOn(PubSub, 'subscribe')
+				.mockImplementation(jest.fn(() => Observable.of({})));
+
+			const api = new API(config);
+			const url = 'https://example.custom-domain.com/graphql',
+				realtimeUrl = 'https://example.realtime.custom-domain.com/graphql',
+				realtimeHost = 'host.appsync-api.amazonaws.com',
+				region = 'us-east-2',
+				apiKey = 'secret_api_key',
+				variables = { id: '809392da-ec91-4ef0-b219-5238a8f942b2' };
+
+			api.configure({
+				aws_appsync_graphqlEndpoint: url,
+				aws_appsync_realtime_endpoint: realtimeUrl,
+				aws_appsync_realtime_host: realtimeHost,
+				aws_appsync_region: region,
+				aws_appsync_authenticationType: 'API_KEY',
+				aws_appsync_apiKey: apiKey,
+			});
+
+			const SubscribeToEventComments = `subscription SubscribeToEventComments($eventId: String!) {
+				subscribeToEventComments(eventId: $eventId) {
+					eventId
+					commentId
+					content
+				}
+			}`;
+
+			const doc = parse(SubscribeToEventComments);
+			const query = print(doc);
+
+			(api.graphql({
+				query,
+				variables,
+			}) as any).subscribe();
+
+			expect(spyon_pubsub).toBeCalledWith(
+				'',
+				expect.objectContaining({
+					appSyncGraphqlEndpoint: url,
+					appSyncRealtimeEndpoint: realtimeUrl,
+					appSyncRealtimeHost: realtimeHost,
+					authenticationType: GRAPHQL_AUTH_MODE.API_KEY,
+				})
+			);
+		});
 	});
 
 	describe('configure test', () => {
